@@ -31,9 +31,13 @@ def get_live_odds(sport):
             try:
                 team1 = game.get("home_team", "Team A")
                 all_teams = game.get("teams", [])
-                team2 = "Team B"
-                if all_teams and team1 in all_teams:
+                team2 = game.get("away_team", "Team B")  # fallback to "away_team" if available
+
+                if not team2 or team2 == team1:
+                     # last resort fallback if teams list is available
+                    if all_teams and team1 in all_teams:
                     team2 = next((t for t in all_teams if t != team1), "Team B")
+
 
                 book = game["bookmakers"][0] if game["bookmakers"] else None
                 if not book:
