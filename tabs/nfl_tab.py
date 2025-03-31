@@ -2,9 +2,12 @@ import streamlit as st
 from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_history
 import openai
 
-openai.api_key = st.secrets.get("OPENAI_API_KEY", "sk-...replace_me")
-
 def generate_bet_reasoning(row):
+    openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
+
+    if not openai.api_key:
+        return "⚠️ OpenAI key not found in secrets."
+
     prompt = f"""
     Analyze this NFL bet:
     - Matchup: {row['team1']} vs {row['team2']}
@@ -14,7 +17,7 @@ def generate_bet_reasoning(row):
     - EV: {row['implied_edge']:.2f}%
     - Edge: {row['true_line'] - float(row['spread']):.2f}
 
-    Give a short betting explanation.
+    Briefly explain whether this is a sharp value bet and why.
     """
 
     try:
@@ -25,7 +28,7 @@ def generate_bet_reasoning(row):
         )
         return response.choices[0].message["content"].strip()
     except Exception as e:
-        return f"Error: {e}"
+        return f"⚠️ GPT Error: {e}"
 
 def render():
     st.title("🏈 NFL Betting Edge")
@@ -54,7 +57,4 @@ def render():
             if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
                 st.markdown(generate_bet_reasoning(row))
 
-            if st.button("➕ Add to History", key=f"add_{row['id']}"):
-                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
-
-        st.markdown("---")
+            if st.button("➕ Add to History", key=f"add_{_
