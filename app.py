@@ -6,7 +6,6 @@ st.set_page_config(page_title="Morrow's Moneyline", layout="wide")
 
 st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap'); html, body, [class*='css'] { font-family: 'Rubik', sans-serif; }</style>", unsafe_allow_html=True)
 load_logo()
-display_ticker()
 
 tabs = {
     "🏠 Dashboard": nba_tab.render,
