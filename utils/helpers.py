@@ -81,7 +81,7 @@ def load_logo():
 
 def display_ticker():
     with st.container():
-        st.markdown(\"""
+        st.markdown("""
         <marquee behavior='scroll' direction='left' scrollamount='4' style='color:white;background:black;padding:6px;font-weight:bold;font-size:14px;border-radius:8px;margin-bottom:10px'>
         📈 WTI Crude: $82.17 | 🏀 Celtics -3.5 | 🧠 Thunder +2.5 (EV +5.2%) | 💰 Henry Hub Gas: $2.19
         </marquee>
