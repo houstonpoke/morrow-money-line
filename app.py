@@ -1,6 +1,6 @@
 import streamlit as st
 from tabs import nba_tab, ncaab_tab, nfl_tab, cfb_tab, research_hub
-from utils.helpers import load_logo, display_ticker
+from utils.helpers import load_logo
 
 st.set_page_config(page_title="Morrow's Moneyline", layout="wide")
 
