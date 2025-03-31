@@ -58,6 +58,5 @@ def render():
                 st.markdown(generate_bet_reasoning(row))
 
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
-                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
+                add
 
-        st.markdown("---")
