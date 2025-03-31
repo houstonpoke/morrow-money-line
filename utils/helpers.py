@@ -31,13 +31,12 @@ def get_live_odds(sport):
             try:
                 team1 = game.get("home_team", "Team A")
                 all_teams = game.get("teams", [])
-                team2 = game.get("away_team", "Team B")  # fallback to "away_team" if available
+                team2 = game.get("away_team", "Team B")  # fallback to away_team if available
 
                 if not team2 or team2 == team1:
-                     # last resort fallback if teams list is available
+                    # last resort fallback if teams list is available
                     if all_teams and team1 in all_teams:
-                    team2 = next((t for t in all_teams if t != team1), "Team B")
-
+                        team2 = next((t for t in all_teams if t != team1), "Team B")
 
                 book = game["bookmakers"][0] if game["bookmakers"] else None
                 if not book:
@@ -94,13 +93,6 @@ def color_status(status):
 def load_logo():
     st.markdown("<h1 style='font-size:2.5em'>🤠 Morrow’s Moneyline</h1>", unsafe_allow_html=True)
 
-def display_ticker():
-    with st.container():
-        st.markdown("""
-        <marquee behavior='scroll' direction='left' scrollamount='4' style='color:white;background:black;padding:6px;font-weight:bold;font-size:14px;border-radius:8px;margin-bottom:10px'>
-        📈 WTI Crude: $82.17 | 🏀 Celtics -3.5 | 🧠 Thunder +2.5 (EV +5.2%) | 💰 Henry Hub Gas: $2.19
-        </marquee>
-        """, unsafe_allow_html=True)
 
 def add_bet_to_history(row, ev, edge, status):
     if "bet_history" not in st.session_state:
