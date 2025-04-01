@@ -2,28 +2,29 @@ import streamlit as st
 from tabs import nba_tab, ncaab_tab, nfl_tab, cfb_tab, research_hub
 import openai
 
-# ✅ MUST BE FIRST
+# ✅ MUST be the first Streamlit call
 st.set_page_config(page_title="Morrow's Moneyline", layout="wide")
 
-openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
+# ✅ Updated for openai>=1.0.0
+client = openai.OpenAI(api_key=st.secrets.get("OPENAI_API_KEY", ""))
 
-# 🧪 TEMPORARY GPT TEST
+# 🧪 TEMPORARY GPT TEST BUTTON
 if st.button("🧪 Test GPT"):
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "What's the spread of a sharp bet?"}],
             max_tokens=50
         )
         st.success("✅ GPT test successful!")
-        st.write(response.choices[0].message["content"].strip())
+        st.write(response.choices[0].message.content.strip())
     except Exception as e:
         st.error(f"GPT Test Error: {e}")
 
-# ✅ Style and Layout
+# ✅ Custom styling
 st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap'); html, body, [class*='css'] { font-family: 'Rubik', sans-serif; }</style>", unsafe_allow_html=True)
 
-# ✅ Navigation
+# ✅ Sidebar Navigation
 tabs = {
     "NBA": nba_tab.render,
     "NFL": nfl_tab.render,
