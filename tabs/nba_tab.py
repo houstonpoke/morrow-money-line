@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.helpers import color_status
+from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_history
 import requests
 
 def generate_bet_reasoning(row):
@@ -30,8 +30,6 @@ def generate_bet_reasoning(row):
         response.raise_for_status()
         result = response.json()
 
-        st.write("Hugging Face raw result:", result)
-
         if isinstance(result, list) and "generated_text" in result[0]:
             return result[0]["generated_text"]
         elif isinstance(result, dict) and "generated_text" in result:
@@ -42,29 +40,34 @@ def generate_bet_reasoning(row):
         return f"❌ Hugging Face Error: {e}"
 
 def render():
-    st.title("🏀 NBA Betting Edge (Test Mode)")
+    st.title("🏀 NBA Betting Edge")
 
-    # Fake data row
-    row = {
-        "team1": "Kansas",
-        "team2": "Duke",
-        "spread": "-4.5",
-        "book": "FanDuel",
-        "total": "145.0",
-        "true_line": 2.0,
-        "implied_edge": 7.2,
-        "status": "green",
-        "id": "test_001"
-    }
+    odds_data = get_live_odds("NBA")
+    if odds_data.empty:
+        st.warning("No NBA odds available right now.")
+        return
 
-    st.subheader(f"{row['team1']} vs {row['team2']}")
-    st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
-    st.markdown(f"**Total:** {row['total']}")
-    st.markdown(f"**EV:** `{row['implied_edge']:.2f}%`")
-    st.markdown(f"**Edge:** `{row['true_line'] - float(row['spread']):.2f}`")
-    st.markdown(color_status(row["status"]), unsafe_allow_html=True)
+    odds_data["ev"], odds_data["edge"], odds_data["status"] = zip(*odds_data.apply(calculate_ev, axis=1))
+    odds_data = odds_data.sort_values(by="ev", ascending=False)
 
-    if st.button("🧠 Why this bet?"):
-        st.write("🧠 Button was clicked!")
-        explanation = generate_bet_reasoning(row)
-        st.markdown(explanation)
+    for _, row in odds_data.iterrows():
+        st.subheader(f"{row['team1']} vs {row['team2']}")
+
+        col1, col2, col3 = st.columns([4, 3, 2])
+        with col1:
+            st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
+            st.markdown(f"**Total:** {row['total']}")
+        with col2:
+            st.markdown(f"**EV:** `{row['ev']:.2f}%`")
+            st.markdown(f"**Edge:** `{row['edge']:.2f}`")
+        with col3:
+            st.markdown(color_status(row["status"]), unsafe_allow_html=True)
+
+            if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
+                explanation = generate_bet_reasoning(row)
+                st.markdown(explanation)
+
+            if st.button("➕ Add to History", key=f"add_{row['id']}"):
+                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
+
+        st.markdown("---")
