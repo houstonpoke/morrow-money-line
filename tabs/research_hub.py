@@ -1,26 +1,26 @@
 import streamlit as st
 import pandas as pd
 from utils.helpers import color_status
-
-# Optional: for GPT functionality
 import openai
 
-# SET YOUR OPENAI API KEY HERE or use streamlit secrets
-openai.api_key = st.secrets.get("OPENAI_API_KEY", "sk-...replace_me")
+openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
 
 def generate_gpt_rationale(bet):
+    if not openai.api_key:
+        return "⚠️ OpenAI API key missing from secrets."
+
     prompt = f"""
-    Analyze the following bet:
+    Analyze this bet:
     - Matchup: {bet['matchup']}
     - Spread: {bet['spread']}
     - Total: {bet['total']}
     - Book: {bet['book']}
     - EV: {bet['ev']:.2f}%
     - Morrow's Edge: {bet['edge']:.2f}
-    
-    Give a short betting analysis explaining why this could be a good value bet. Use clear, confident language.
+
+    Is this a good value bet? Give a short betting rationale.
     """
-    
+
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -29,7 +29,7 @@ def generate_gpt_rationale(bet):
         )
         return response.choices[0].message["content"].strip()
     except Exception as e:
-        return f"Error generating rationale: {e}"
+        return f"⚠️ GPT Error: {e}"
 
 def render():
     st.title("📊 Research Hub")
