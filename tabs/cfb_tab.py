@@ -1,14 +1,13 @@
+
 import streamlit as st
 from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_history
-import openai
+import requests
 
 def generate_bet_reasoning(row):
-    openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
-    if not openai.api_key:
-        return "⚠️ OpenAI key not found in secrets."
+    hf_token = st.secrets.get("HUGGINGFACE_API_KEY", "")
 
     prompt = f"""
-    Analyze this College Football bet:
+    Analyze this sports bet:
     - Matchup: {row['team1']} vs {row['team2']}
     - Spread: {row['spread']} @ {row['book']}
     - Total: {row['total']}
@@ -16,22 +15,28 @@ def generate_bet_reasoning(row):
     - EV: {row['implied_edge']:.2f}%
     - Edge: {row['true_line'] - float(row['spread']):.2f}
 
-    Is this a sharp value bet? Briefly explain why or why not.
+    Is this a good value bet? Explain briefly.
     """
 
+    headers = {
+        "Authorization": f"Bearer {hf_token}" if hf_token else None
+    }
+
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=150
+        res = requests.post(
+            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
+            headers=headers,
+            json={"inputs": prompt}
         )
-        return response.choices[0].message["content"].strip()
+        res.raise_for_status()
+        result = res.json()
+        return result[0]["generated_text"]
     except Exception as e:
-        return f"⚠️ GPT Error: {e}"
+        return f"❌ Hugging Face Error: {e}"
 
 def render():
     st.title("🎓 College Football Betting Edge")
-    odds_data = get_live_odds("CFB")
+    odds_data = get_live_odds("COLLEGE")
 
     if odds_data.empty:
         st.warning("No College Football odds available right now.")
