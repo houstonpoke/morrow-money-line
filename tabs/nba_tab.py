@@ -4,7 +4,7 @@ from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_
 import requests
 
 def generate_bet_reasoning(row):
-    hf_token = st.secrets.get("HUGGINGFACE_API_KEY", "")
+    groq_api_key = st.secrets.get("GROQ_API_KEY", "")
 
     spread = row['spread'] if row['spread'] not in ["N/A", None] else "unknown"
     total = row['total'] if row['total'] not in ["N/A", None] else "unknown"
@@ -22,27 +22,32 @@ def generate_bet_reasoning(row):
     Is this a good value bet? Explain briefly.
     """
 
-    headers = {
-        "Authorization": f"Bearer {hf_token}" if hf_token else None
-    }
-
     try:
         response = requests.post(
-            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
-            headers=headers,
-            json={"inputs": prompt}
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {groq_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "mixtral-8x7b-32768",
+                "messages": [
+                    {"role": "system", "content": "You are a sharp sports betting assistant that explains betting value in plain English."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.7
+            }
         )
         response.raise_for_status()
         result = response.json()
 
-        if isinstance(result, list) and "generated_text" in result[0]:
-            return result[0]["generated_text"]
-        elif isinstance(result, dict) and "generated_text" in result:
-            return result["generated_text"]
+        if "choices" in result and result["choices"]:
+            return result["choices"][0]["message"]["content"]
         else:
-            return "⚠️ No rationale returned. Try again later."
+            return "⚠️ No rationale returned from Groq."
+
     except Exception as e:
-        return f"❌ Hugging Face Error: {e}"
+        return f"❌ Groq API Error: {e}"
 
 def render():
     st.title("🏀 NBA Betting Edge")
@@ -73,7 +78,7 @@ def render():
                     add = st.form_submit_button("➕ Add to History")
 
                 if why:
-                    with st.spinner("Generating rationale..."):
+                    with st.spinner("Asking Mistral via Groq..."):
                         explanation = generate_bet_reasoning(row)
                     st.session_state.shown_explanations[row["id"]] = explanation
 
