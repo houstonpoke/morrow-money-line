@@ -74,3 +74,18 @@ def render():
                 add_bet_to_history(row, row["ev"], row["edge"], row["status"])
 
         st.markdown("---")
+
+    # 🧪 TEST DIRECTLY ON LOAD
+    if st.sidebar.button("🧪 Run GPT test directly"):
+        fake_row = {
+            "team1": "Team A",
+            "team2": "Team B",
+            "spread": "-3.5",
+            "book": "DraftKings",
+            "total": "145.5",
+            "true_line": 2.0,
+            "implied_edge": 6.4,
+            "id": "test"
+        }
+        st.subheader("🧠 Testing Bet Reasoning with Fake Data")
+        st.markdown(generate_bet_reasoning(fake_row))
