@@ -1,7 +1,4 @@
-# Create nba_tab.py using OpenAI SDK v1.0+ compatible with project-based API keys
-nba_openai_v1_path = "/mnt/data/nba_tab_openai_v1.py"
 
-nba_openai_v1_code = """
 import streamlit as st
 from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_history
 import openai
@@ -14,7 +11,7 @@ def generate_bet_reasoning(row):
     total = row['total'] if row['total'] not in ["N/A", None] else "unknown"
     edge = row['true_line'] - float(row['spread']) if row['spread'] not in ["N/A", None] else 0.0
 
-    prompt = f\"\"\"
+    prompt = f"""
     Analyze this sports bet:
     - Matchup: {row['team1']} vs {row['team2']}
     - Spread: {spread} @ {row['book']}
@@ -24,7 +21,7 @@ def generate_bet_reasoning(row):
     - Edge: {edge:.2f}
 
     Is this a good value bet? Explain briefly.
-    \"\"\"
+    """
 
     try:
         response = client.chat.completions.create(
@@ -79,9 +76,3 @@ def render():
             if row["id"] in st.session_state.shown_explanations:
                 st.markdown("### ✅ Rationale:")
                 st.markdown(st.session_state.shown_explanations[row["id"]])
-"""
-
-with open(nba_openai_v1_path, "w") as f:
-    f.write(nba_openai_v1_code)
-
-nba_openai_v1_path
