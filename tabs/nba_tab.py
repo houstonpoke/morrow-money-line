@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_history
+from utils.helpers import color_status
 import requests
 
 def generate_bet_reasoning(row):
@@ -42,50 +42,29 @@ def generate_bet_reasoning(row):
         return f"❌ Hugging Face Error: {e}"
 
 def render():
-    st.title("🏀 NBA Betting Edge")
-    odds_data = get_live_odds("NBA")
+    st.title("🏀 NBA Betting Edge (Test Mode)")
 
-    if odds_data.empty:
-        st.warning("No NBA odds available right now.")
-        return
+    # Fake data row
+    row = {
+        "team1": "Kansas",
+        "team2": "Duke",
+        "spread": "-4.5",
+        "book": "FanDuel",
+        "total": "145.0",
+        "true_line": 2.0,
+        "implied_edge": 7.2,
+        "status": "green",
+        "id": "test_001"
+    }
 
-    odds_data["ev"], odds_data["edge"], odds_data["status"] = zip(*odds_data.apply(calculate_ev, axis=1))
-    odds_data = odds_data.sort_values(by="ev", ascending=False)
+    st.subheader(f"{row['team1']} vs {row['team2']}")
+    st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
+    st.markdown(f"**Total:** {row['total']}")
+    st.markdown(f"**EV:** `{row['implied_edge']:.2f}%`")
+    st.markdown(f"**Edge:** `{row['true_line'] - float(row['spread']):.2f}`")
+    st.markdown(color_status(row["status"]), unsafe_allow_html=True)
 
-    for _, row in odds_data.iterrows():
-        st.subheader(f"{row['team1']} vs {row['team2']}")
-
-        col1, col2, col3 = st.columns([4, 3, 2])
-        with col1:
-            st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
-            st.markdown(f"**Total:** {row['total']}")
-        with col2:
-            st.markdown(f"**EV:** `{row['ev']:.2f}%`")
-            st.markdown(f"**Edge:** `{row['edge']:.2f}`")
-        with col3:
-            st.markdown(color_status(row["status"]), unsafe_allow_html=True)
-
-            if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
-                st.write("🧠 Button was clicked!")
-                explanation = generate_bet_reasoning(row)
-                st.markdown(explanation)
-
-            if st.button("➕ Add to History", key=f"add_{row['id']}"):
-                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
-
-        st.markdown("---")
-
-    # 🧪 TEST DIRECTLY ON LOAD
-    if st.sidebar.button("🧪 Run GPT test directly"):
-        fake_row = {
-            "team1": "Team A",
-            "team2": "Team B",
-            "spread": "-3.5",
-            "book": "DraftKings",
-            "total": "145.5",
-            "true_line": 2.0,
-            "implied_edge": 6.4,
-            "id": "test"
-        }
-        st.subheader("🧠 Testing Bet Reasoning with Fake Data")
-        st.markdown(generate_bet_reasoning(fake_row))
+    if st.button("🧠 Why this bet?"):
+        st.write("🧠 Button was clicked!")
+        explanation = generate_bet_reasoning(row)
+        st.markdown(explanation)
