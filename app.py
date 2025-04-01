@@ -12,7 +12,7 @@ client = openai.OpenAI(api_key=st.secrets.get("OPENAI_API_KEY", ""))
 if st.button("🧪 Test GPT"):
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "What's the spread of a sharp bet?"}],
             max_tokens=50
         )
