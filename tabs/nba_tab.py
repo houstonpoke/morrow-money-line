@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-# Define the Claude Instant API key and URL
+# Define the Claude Instant API key and URL (fixed URL)
 CLAUDE_API_URL = "https://api.openrouter.ai/v1/completions"
 CLAUDE_API_KEY = st.secrets["CLAUDE_API_KEY"]
 
