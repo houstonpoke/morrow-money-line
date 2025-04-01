@@ -33,7 +33,9 @@ def generate_bet_reasoning(row):
                     {"role": "system", "content": "You are a sharp sports betting assistant that explains betting value in plain English."},
                     {"role": "user", "content": prompt}
                 ],
-                "temperature": 0.7
+                "temperature": 0.7,
+                "max_tokens": 500,
+                "stream": False
             }
         )
         response.raise_for_status()
