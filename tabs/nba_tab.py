@@ -23,14 +23,22 @@ def generate_bet_reasoning(row):
     }
 
     try:
-        res = requests.post(
+        response = requests.post(
             "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
             headers=headers,
             json={"inputs": prompt}
         )
-        res.raise_for_status()
-        result = res.json()
-        return result[0]["generated_text"]
+        response.raise_for_status()
+        result = response.json()
+
+        st.write("Hugging Face raw result:", result)
+
+        if isinstance(result, list) and "generated_text" in result[0]:
+            return result[0]["generated_text"]
+        elif isinstance(result, dict) and "generated_text" in result:
+            return result["generated_text"]
+        else:
+            return "⚠️ No rationale returned. Try again later."
     except Exception as e:
         return f"❌ Hugging Face Error: {e}"
 
