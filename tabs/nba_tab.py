@@ -1,3 +1,4 @@
+
 import streamlit as st
 from utils.helpers import get_live_odds, calculate_ev, color_status, add_bet_to_history
 import requests
@@ -51,17 +52,16 @@ def render():
     odds_data = odds_data.sort_values(by="ev", ascending=False)
 
     for _, row in odds_data.iterrows():
-        st.subheader(f"{row['team1']} vs {row['team2']}")
-
-        col1, col2, col3 = st.columns([4, 3, 2])
-        with col1:
-            st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
-            st.markdown(f"**Total:** {row['total']}")
-        with col2:
-            st.markdown(f"**EV:** `{row['ev']:.2f}%`")
-            st.markdown(f"**Edge:** `{row['edge']:.2f}`")
-        with col3:
-            st.markdown(color_status(row["status"]), unsafe_allow_html=True)
+        with st.expander(f"{row['team1']} vs {row['team2']}"):
+            col1, col2, col3 = st.columns([4, 3, 2])
+            with col1:
+                st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
+                st.markdown(f"**Total:** {row['total']}")
+            with col2:
+                st.markdown(f"**EV:** `{row['ev']:.2f}%`")
+                st.markdown(f"**Edge:** `{row['edge']:.2f}`")
+            with col3:
+                st.markdown(color_status(row["status"]), unsafe_allow_html=True)
 
             if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
                 explanation = generate_bet_reasoning(row)
@@ -70,4 +70,3 @@ def render():
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
                 add_bet_to_history(row, row["ev"], row["edge"], row["status"])
 
-        st.markdown("---")
