@@ -1,53 +1,53 @@
+
 import streamlit as st
 import pandas as pd
 import requests
 import uuid
 
-# Real Odds API (TheOddsAPI)
-API_KEY = st.secrets["ODDS_API_KEY"]
-BASE_URL = "https://api.the-odds-api.com/v4/sports"
-
 SPORT_MAPPING = {
-    "NBA": "basketball_nba",
-    "NFL": "americanfootball_nfl",
-    "NCAAB": "basketball_ncaab",
-    "CFB": "americanfootball_ncaaf"
+    "NBA": "nba",
+    "NFL": "nfl",
+    "NCAAB": "mens-college-basketball",
+    "CFB": "college-football"
 }
+
+ESPN_SCHEDULE_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/scoreboard"
 
 def get_live_odds(sport):
     sport_key = SPORT_MAPPING.get(sport)
     if not sport_key:
+        st.warning(f"No odds source available for {sport}")
         return pd.DataFrame()
 
-    url = f"{BASE_URL}/{sport_key}/odds/?regions=us&markets=spreads,totals&oddsFormat=american&apiKey={API_KEY}"
+    url = ESPN_SCHEDULE_BASE.replace("{league}", sport_key)
 
     try:
         res = requests.get(url)
         res.raise_for_status()
-        games = res.json()
+        events = res.json().get("events", [])
         data = []
 
-        for game in games:
+        for game in events:
             try:
-                team1 = game.get("home_team", "Team A")
-                all_teams = game.get("teams", [])
-                team2 = game.get("away_team", "Team B")  # fallback to away_team if available
-
-                if not team2 or team2 == team1:
-                    # last resort fallback if teams list is available
-                    if all_teams and team1 in all_teams:
-                        team2 = next((t for t in all_teams if t != team1), "Team B")
-
-                book = game["bookmakers"][0] if game["bookmakers"] else None
-                if not book:
+                competitions = game.get("competitions", [])
+                if not competitions:
                     continue
 
-                markets = {m["key"]: m for m in book.get("markets", [])}
-                spread_outcomes = markets.get("spreads", {}).get("outcomes", [])
-                total_outcomes = markets.get("totals", {}).get("outcomes", [])
+                comp = competitions[0]
+                competitors = comp.get("competitors", [])
+                if len(competitors) < 2:
+                    continue
 
-                spread = spread_outcomes[0].get("point") if spread_outcomes else "N/A"
-                total = total_outcomes[0].get("point") if total_outcomes else "N/A"
+                team1 = competitors[0]["team"]["displayName"]
+                team2 = competitors[1]["team"]["displayName"]
+
+                odds = comp.get("odds", [])
+                if not odds:
+                    continue
+
+                spread = odds[0].get("spread", "N/A")
+                total = odds[0].get("overUnder", "N/A")
+                book = odds[0].get("provider", {}).get("name", "ESPN")
 
                 data.append({
                     "id": str(uuid.uuid4()),
@@ -55,7 +55,7 @@ def get_live_odds(sport):
                     "team2": team2,
                     "spread": spread,
                     "total": total,
-                    "book": book["title"],
+                    "book": book,
                     "true_line": float(spread) + (0.5 - 1.0) if spread not in ["N/A", None] else 0.0,
                     "implied_edge": round((1.5 - abs(float(spread))) * 2, 2) if spread not in ["N/A", None] else 0.0,
                     "win_prob": 0.5
@@ -92,7 +92,6 @@ def color_status(status):
 
 def load_logo():
     st.markdown("<h1 style='font-size:2.5em'>🤠 Morrow’s Moneyline</h1>", unsafe_allow_html=True)
-
 
 def add_bet_to_history(row, ev, edge, status):
     if "bet_history" not in st.session_state:
