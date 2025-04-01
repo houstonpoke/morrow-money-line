@@ -66,8 +66,10 @@ def render():
         with col3:
             st.markdown(color_status(row["status"]), unsafe_allow_html=True)
 
-            if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
-                st.markdown(generate_bet_reasoning(row))
+        if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
+        st.write("🧠 Button was clicked!")  # debug
+        explanation = generate_bet_reasoning(row)
+        st.markdown(explanation)
 
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
                 add_bet_to_history(row, row["ev"], row["edge"], row["status"])
