@@ -77,3 +77,17 @@ def render():
 
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
                 add_bet_to_history(row, row["ev"], row["edge"], row["status"])
+                
+if st.sidebar.button("🧪 Test GPT Now"):
+    test_row = {
+        "team1": "Texas",
+        "team2": "Kansas",
+        "spread": "-3.5",
+        "book": "FanDuel",
+        "total": "147.5",
+        "true_line": 2.0,
+        "implied_edge": 7.1,
+    }
+    st.write("🧠 Running test rationale...")
+    result = generate_bet_reasoning(test_row)
+    st.markdown(result)
