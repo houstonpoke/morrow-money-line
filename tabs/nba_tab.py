@@ -6,14 +6,19 @@ import requests
 def generate_bet_reasoning(row):
     hf_token = st.secrets.get("HUGGINGFACE_API_KEY", "")
 
+    # Handle missing spread/total
+    spread = row['spread'] if row['spread'] not in ["N/A", None] else "unknown"
+    total = row['total'] if row['total'] not in ["N/A", None] else "unknown"
+    edge = row['true_line'] - float(row['spread']) if row['spread'] not in ["N/A", None] else 0.0
+
     prompt = f"""
     Analyze this sports bet:
     - Matchup: {row['team1']} vs {row['team2']}
-    - Spread: {row['spread']} @ {row['book']}
-    - Total: {row['total']}
+    - Spread: {spread} @ {row['book']}
+    - Total: {total}
     - Model Line: {row['true_line']:.2f}
     - EV: {row['implied_edge']:.2f}%
-    - Edge: {row['true_line'] - float(row['spread']):.2f}
+    - Edge: {edge:.2f}
 
     Is this a good value bet? Explain briefly.
     """
@@ -69,4 +74,3 @@ def render():
 
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
                 add_bet_to_history(row, row["ev"], row["edge"], row["status"])
-
