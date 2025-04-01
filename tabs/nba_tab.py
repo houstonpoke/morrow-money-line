@@ -4,7 +4,6 @@ import openai
 
 def generate_bet_reasoning(row):
     openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
-
     if not openai.api_key:
         return "⚠️ OpenAI key not found in secrets."
 
@@ -17,7 +16,7 @@ def generate_bet_reasoning(row):
     - EV: {row['implied_edge']:.2f}%
     - Edge: {row['true_line'] - float(row['spread']):.2f}
 
-    Briefly explain whether this is a sharp value bet and why.
+    Is this a sharp value bet? Briefly explain why or why not.
     """
 
     try:
@@ -58,5 +57,6 @@ def render():
                 st.markdown(generate_bet_reasoning(row))
 
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
-                add
+                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
 
+        st.markdown("---")
