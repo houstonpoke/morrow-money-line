@@ -7,6 +7,32 @@ def generate_bet_reasoning(row):
     if not openai.api_key:
         return "⚠️ OpenAI key not found in secrets."
 
+    st.write("🧠 Calling OpenAI...")  # <-- ADD THIS LINE
+
+    prompt = f"""
+    Analyze this NBA bet:
+    - Matchup: {row['team1']} vs {row['team2']}
+    - Spread: {row['spread']} @ {row['book']}
+    - Total: {row['total']}
+    - Model Line: {row['true_line']:.2f}
+    - EV: {row['implied_edge']:.2f}%
+    - Edge: {row['true_line'] - float(row['spread']):.2f}
+
+    Is this a sharp value bet? Briefly explain why or why not.
+    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=150
+        )
+        return response.choices[0].message["content"].strip()
+    except Exception as e:
+        return f"⚠️ GPT Error: {e}"
+    if not openai.api_key:
+        return "⚠️ OpenAI key not found in secrets."
+
     prompt = f"""
     Analyze this NBA bet:
     - Matchup: {row['team1']} vs {row['team2']}
