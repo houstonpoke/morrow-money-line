@@ -36,6 +36,8 @@ def generate_bet_reasoning(row):
         response.raise_for_status()
         result = response.json()
 
+        st.write("🔍 Raw Hugging Face result:", result)
+
         if isinstance(result, list) and "generated_text" in result[0]:
             return result[0]["generated_text"]
         elif isinstance(result, dict) and "generated_text" in result:
@@ -69,8 +71,9 @@ def render():
                 st.markdown(color_status(row["status"]), unsafe_allow_html=True)
 
             if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
-                explanation = generate_bet_reasoning(row)
-                st.markdown(explanation)
+                with st.spinner("Generating rationale..."):
+                    explanation = generate_bet_reasoning(row)
+                st.markdown(explanation or "⚠️ Still no explanation generated.")
 
             if st.button("➕ Add to History", key=f"add_{row['id']}"):
                 add_bet_to_history(row, row["ev"], row["edge"], row["status"])
