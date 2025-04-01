@@ -4,12 +4,11 @@ import openai
 
 def generate_bet_reasoning(row):
     openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
-
     if not openai.api_key:
         return "⚠️ OpenAI key not found in secrets."
 
     prompt = f"""
-    Analyze this NFL bet:
+    Analyze this NCAA Basketball bet:
     - Matchup: {row['team1']} vs {row['team2']}
     - Spread: {row['spread']} @ {row['book']}
     - Total: {row['total']}
@@ -17,7 +16,7 @@ def generate_bet_reasoning(row):
     - EV: {row['implied_edge']:.2f}%
     - Edge: {row['true_line'] - float(row['spread']):.2f}
 
-    Briefly explain whether this is a sharp value bet and why.
+    Is this a sharp value bet? Briefly explain why or why not.
     """
 
     try:
@@ -31,11 +30,11 @@ def generate_bet_reasoning(row):
         return f"⚠️ GPT Error: {e}"
 
 def render():
-    st.title("🏈 NFL Betting Edge")
-    odds_data = get_live_odds("NFL")
+    st.title("🏀 NCAA Basketball Betting Edge")
+    odds_data = get_live_odds("NCAAB")
 
     if odds_data.empty:
-        st.warning("No NFL odds available right now.")
+        st.warning("No NCAAB odds available right now.")
         return
 
     odds_data["ev"], odds_data["edge"], odds_data["status"] = zip(*odds_data.apply(calculate_ev, axis=1))
@@ -57,4 +56,7 @@ def render():
             if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
                 st.markdown(generate_bet_reasoning(row))
 
-            if st.button("➕ Add to History", key=f"add_{_
+            if st.button("➕ Add to History", key=f"add_{row['id']}"):
+                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
+
+        st.markdown("---")
