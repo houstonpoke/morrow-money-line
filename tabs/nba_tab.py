@@ -22,8 +22,6 @@ def generate_bet_reasoning(row):
     Is this a good value bet? Explain briefly.
     """
 
-    st.write("🔍 Prompt sent to Hugging Face:", prompt)
-
     headers = {
         "Authorization": f"Bearer {hf_token}" if hf_token else None
     }
@@ -36,8 +34,6 @@ def generate_bet_reasoning(row):
         )
         response.raise_for_status()
         result = response.json()
-
-        st.write("🧠 Raw Hugging Face Result:", result)
 
         if isinstance(result, list) and "generated_text" in result[0]:
             return result[0]["generated_text"]
@@ -64,23 +60,25 @@ def render():
 
     for _, row in odds_data.iterrows():
         with st.expander(f"{row['team1']} vs {row['team2']}"):
-            st.write(f"📌 ROW ID: {row['id']}")  # debug
+            st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
+            st.markdown(f"**Total:** {row['total']}")
+            st.markdown(f"**EV:** `{row['ev']:.2f}%` | **Edge:** `{row['edge']:.2f}`")
+            st.markdown(color_status(row["status"]), unsafe_allow_html=True)
 
-            col1, col2, col3 = st.columns([4, 3, 2])
-            with col1:
-                st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
-                st.markdown(f"**Total:** {row['total']}")
-            with col2:
-                st.markdown(f"**EV:** `{row['ev']:.2f}%`")
-                st.markdown(f"**Edge:** `{row['edge']:.2f}`")
-            with col3:
-                st.markdown(color_status(row["status"]), unsafe_allow_html=True)
+            with st.form(key=f"form_{row['id']}"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    why = st.form_submit_button("🧠 Why this bet?")
+                with col2:
+                    add = st.form_submit_button("➕ Add to History")
 
-            if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
-                st.write("🟢 Button Clicked!")
-                with st.spinner("Generating rationale..."):
-                    explanation = generate_bet_reasoning(row)
-                st.session_state.shown_explanations[row["id"]] = explanation
+                if why:
+                    with st.spinner("Generating rationale..."):
+                        explanation = generate_bet_reasoning(row)
+                    st.session_state.shown_explanations[row["id"]] = explanation
+
+                if add:
+                    add_bet_to_history(row, row["ev"], row["edge"], row["status"])
 
             if row["id"] in st.session_state.shown_explanations:
                 st.markdown("### ✅ Rationale:")
