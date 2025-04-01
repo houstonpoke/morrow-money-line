@@ -4,7 +4,6 @@ import openai
 
 def generate_bet_reasoning(row):
     openai.api_key = st.secrets.get("OPENAI_API_KEY", "")
-
     if not openai.api_key:
         return "⚠️ OpenAI key not found in secrets."
 
@@ -17,7 +16,7 @@ def generate_bet_reasoning(row):
     - EV: {row['implied_edge']:.2f}%
     - Edge: {row['true_line'] - float(row['spread']):.2f}
 
-    Briefly explain whether this is a sharp value bet and why.
+    Is this a sharp value bet? Briefly explain why or why not.
     """
 
     try:
@@ -35,7 +34,7 @@ def render():
     odds_data = get_live_odds("CFB")
 
     if odds_data.empty:
-        st.warning("No CFB odds available right now.")
+        st.warning("No College Football odds available right now.")
         return
 
     odds_data["ev"], odds_data["edge"], odds_data["status"] = zip(*odds_data.apply(calculate_ev, axis=1))
