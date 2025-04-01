@@ -22,6 +22,8 @@ def generate_bet_reasoning(row):
     Is this a good value bet? Explain briefly.
     """
 
+    st.write("🔍 Prompt sent to Hugging Face:", prompt)
+
     headers = {
         "Authorization": f"Bearer {hf_token}" if hf_token else None
     }
@@ -34,6 +36,8 @@ def generate_bet_reasoning(row):
         )
         response.raise_for_status()
         result = response.json()
+
+        st.write("🧠 Raw Hugging Face Result:", result)
 
         if isinstance(result, list) and "generated_text" in result[0]:
             return result[0]["generated_text"]
@@ -60,6 +64,8 @@ def render():
 
     for _, row in odds_data.iterrows():
         with st.expander(f"{row['team1']} vs {row['team2']}"):
+            st.write(f"📌 ROW ID: {row['id']}")  # debug
+
             col1, col2, col3 = st.columns([4, 3, 2])
             with col1:
                 st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
@@ -71,12 +77,11 @@ def render():
                 st.markdown(color_status(row["status"]), unsafe_allow_html=True)
 
             if st.button("🧠 Why this bet?", key=f"why_{row['id']}"):
+                st.write("🟢 Button Clicked!")
                 with st.spinner("Generating rationale..."):
                     explanation = generate_bet_reasoning(row)
                 st.session_state.shown_explanations[row["id"]] = explanation
 
             if row["id"] in st.session_state.shown_explanations:
+                st.markdown("### ✅ Rationale:")
                 st.markdown(st.session_state.shown_explanations[row["id"]])
-
-            if st.button("➕ Add to History", key=f"add_{row['id']}"):
-                add_bet_to_history(row, row["ev"], row["edge"], row["status"])
