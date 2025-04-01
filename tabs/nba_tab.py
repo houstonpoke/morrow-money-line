@@ -1,28 +1,74 @@
-
 import streamlit as st
-import openai
+import requests
 
-# Set up OpenAI client (v1+ compatible with project keys)
-client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# Define the Claude Instant API key and URL
+CLAUDE_API_URL = "https://api.openrouter.ai/v1/completions"
+CLAUDE_API_KEY = st.secrets["CLAUDE_API_KEY"]
 
-# Test OpenAI directly with a known simple example
-def test_openai():
+def generate_bet_reasoning(row):
+    spread = row['spread'] if row['spread'] not in ["N/A", None] else "unknown"
+    total = row['total'] if row['total'] not in ["N/A", None] else "unknown"
+    edge = row['true_line'] - float(row['spread']) if row['spread'] not in ["N/A", None] else 0.0
+
+    prompt = f"""
+    Analyze this sports bet:
+    - Matchup: {row['team1']} vs {row['team2']}
+    - Spread: {spread} @ {row['book']}
+    - Total: {total}
+    - Model Line: {row['true_line']:.2f}
+    - EV: {row['implied_edge']:.2f}%
+    - Edge: {edge:.2f}
+
+    Is this a good value bet? Explain briefly.
+    """
+
+    headers = {
+        "Authorization": f"Bearer {CLAUDE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Use GPT-3.5 or GPT-4
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Say hello!"}
-            ]
+        response = requests.post(
+            CLAUDE_API_URL,
+            headers=headers,
+            json={
+                "model": "claude-instant-v1",  # Claude Instant
+                "prompt": prompt,
+                "max_tokens": 500,
+                "temperature": 0.7
+            }
         )
-        st.write("✅ GPT Response:")
-        st.markdown(response.choices[0].message.content)
+        response.raise_for_status()
+        result = response.json()
+
+        if "text" in result:
+            return result["text"]
+        else:
+            return "⚠️ No rationale returned from Claude Instant."
     except Exception as e:
-        st.error(f"❌ OpenAI Error: {e}")
+        return f"❌ Claude API Error: {e}"
 
-# Render the test button in the Streamlit UI
 def render():
-    st.title("🧪 OpenAI Test")
+    st.title("🏀 NBA Betting Edge (Claude Instant)")
 
-    if st.button("🧪 Test OpenAI"):
-        test_openai()
+    row = {
+        "team1": "Texas",
+        "team2": "Oklahoma",
+        "spread": "-3.5",
+        "book": "DraftKings",
+        "total": "147.5",
+        "true_line": 2.0,
+        "implied_edge": 7.1,
+    }
+
+    st.subheader(f"{row['team1']} vs {row['team2']}")
+    st.markdown(f"**Spread:** {row['spread']} @ {row['book']}")
+    st.markdown(f"**Total:** {row['total']}")
+    st.markdown(f"**Model Line:** {row['true_line']}")
+    st.markdown(f"**EV:** `{row['implied_edge']}%`")
+
+    if st.button("🧠 Why this bet?"):
+        with st.spinner("Asking Claude Instant..."):
+            explanation = generate_bet_reasoning(row)
+        st.markdown("### ✅ GPT Output:")
+        st.markdown(explanation)
